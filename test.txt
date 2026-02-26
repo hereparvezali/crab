@@ -1,9 +1,6 @@
-    let x = 10;
-    let y = 15;
-    if (x==y) {
-        exit(x);
-    } elif (x>y) {
-        exit(x-y);
-    } else {
-        exit(y-x);
-    }
+let x = 4 * 6/(2/5);
+let y = 1;
+while(x>y){
+    x = x - y;
+}
+exit(x+y);

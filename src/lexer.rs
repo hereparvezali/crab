@@ -9,7 +9,7 @@ pub enum Token {
     Else,
     Exit,
     Ident(String),
-    Number(i32),
+    Number(isize),
     Equal,
     Plus,
     Minus,
@@ -62,7 +62,7 @@ impl<'a> Lexer<'a> {
                 '0'..='9' => {
                     let mut number = 0;
                     while let Some(&c @ ('0'..='9')) = self.input.peek() {
-                        number = number * 10 + (c as i32 - '0' as i32);
+                        number = number * 10 + (c as isize - '0' as isize);
                         self.input.next();
                     }
                     tokens.push(Token::Number(number));

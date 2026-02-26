@@ -113,6 +113,22 @@ impl CodeGen {
                 self.emit_indent("syscall");
                 self.emit("");
             }
+            Stmt::Reassign(name, expr) => {
+                self.emit_indent(&format!("; {} = ...", name));
+
+                // Generate code for the expression, result will be in rax
+                self.gen_expr(expr);
+
+                // Get the variable's stack offset
+                let offset = self
+                    .vars
+                    .get(name)
+                    .unwrap_or_else(|| panic!("undefined variable: {}", name));
+
+                // Store the result on the stack
+                self.emit_indent(&format!("mov [rbp{}], rax", offset));
+                self.emit("");
+            }
             Stmt::If(cond, then_body, elif_branches, else_body) => {
                 let end_label = self.new_label("if_end");
 
@@ -324,7 +340,7 @@ mod comparison_tests {
 
     #[test]
     fn test_while_loop() {
-        let source = "let x = 0; while (x < 5) { let x = x + 1; } exit(x);";
+        let source = "let x = 0; while (x < 5) { x = x + 1; } exit(x);";
         let tokens = Lexer::new(source).tokenize();
         let stmts = Parser::new(tokens).parse();
         let asm = CodeGen::new().generate(&stmts);
@@ -334,6 +350,20 @@ mod comparison_tests {
         assert!(asm.contains(".while_end_"));
         assert!(asm.contains("jmp .while_start_"));
         assert!(asm.contains("je .while_end_"));
+    }
+
+    #[test]
+    fn test_reassign() {
+        let source = "let x = 5; x = 10; exit(x);";
+        let tokens = Lexer::new(source).tokenize();
+        let stmts = Parser::new(tokens).parse();
+        let asm = CodeGen::new().generate(&stmts);
+
+        // Should contain initial assignment and reassignment
+        assert!(asm.contains("mov rax, 5"));
+        assert!(asm.contains("mov rax, 10"));
+        // Both should write to the same stack location
+        assert!(asm.matches("mov [rbp-8], rax").count() == 2);
     }
 }
 

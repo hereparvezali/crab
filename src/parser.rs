@@ -5,7 +5,7 @@ use crate::lexer::Token;
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
     Ident(String),
-    Num(i32),
+    Num(isize),
     BinOp(Box<Expr>, Op, Box<Expr>),
     UnaryOp(Op, Box<Expr>),
 }
@@ -25,6 +25,7 @@ pub enum Op {
 #[derive(Debug, Clone)]
 pub enum Stmt {
     Let(String, Expr),
+    Reassign(String, Expr),
     Exit(Expr),
     While(Expr, Vec<Stmt>),
     If(Expr, Vec<Stmt>, Vec<(Expr, Vec<Stmt>)>, Option<Vec<Stmt>>),
@@ -67,6 +68,13 @@ impl Parser {
                     let expr = self.parse_expr();
                     self.expect(Token::Semicolon);
                     stmts.push(Stmt::Let(ident, expr));
+                }
+                Token::Ident(name) => {
+                    self.tokens.next();
+                    self.expect(Token::Equal);
+                    let expr = self.parse_expr();
+                    self.expect(Token::Semicolon);
+                    stmts.push(Stmt::Reassign(name, expr));
                 }
                 Token::Exit => {
                     self.tokens.next();
@@ -123,7 +131,6 @@ impl Parser {
                     panic!("unexpected token {:?}", tok);
                 }
             }
-            println!("{:?}", stmts);
         }
         stmts
     }
